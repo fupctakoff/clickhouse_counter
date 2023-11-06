@@ -10,30 +10,31 @@ sys.path.append(os.path.join(os.getcwd(), ' ../..'))
 
 
 def get_client():
+    """Локальная сессия для скрипта в этом модуле"""
     with clickhouse_connect.get_client(host=CLICKHOUSE_HOST, port=CLICKHOUSE_PORT, username=CLICKHOUSE_USERNAME,
                                        password=CLICKHOUSE_PASSWORD) as client:
         yield client
 
 
-def create_database():
+def create_database() -> None:
+    """Удаление и создание базы данных ClickHouse"""
     client = get_client().__next__()
     client.command(f'DROP DATABASE IF EXISTS {CLICKHOUSE_DB_NAME}')
     client.command(f'CREATE DATABASE {CLICKHOUSE_DB_NAME}')
 
 
-def create_table():
+def create_table() -> None:
+    """Удаление и создание таблицы базы данных ClickHouse"""
     client = get_client().__next__()
     client.command(f'DROP TABLE IF EXISTS {CLICKHOUSE_TABLE_NAME}')
     table_statement = f'CREATE TABLE {CLICKHOUSE_TABLE_NAME} (url String, title String, text String, topic String, tags String, date Date) ENGINE MergeTree ORDER BY date'
     client.command(table_statement)
 
 
-def inserting_data_into_table():
+def inserting_data_into_table() -> None:
+    """Импорт данных в таблицу базы данных ClickHouse"""
     client = get_client().__next__()
     insert_file(client, CLICKHOUSE_TABLE_NAME, 'data_compressed_copy.csv')
-    # insert_file(client, CLICKHOUSE_TABLE_NAME, 'lenta-ru-news.csv')
-    print(client.command('SELECT timezone()'))
-    print(client.query('SELECT title FROM lenta_table').result_rows)
 
 
 if __name__ == '__main__':
